@@ -5,3 +5,6 @@
 auto-editor
 faster-whisper
 PyYAML
+# boto3 is used only by the render worker (worker.py) to read and write clips
+# and outputs on the R2 bucket over the S3 API. The daily pipeline does not need it.
+boto3

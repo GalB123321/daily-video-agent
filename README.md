@@ -189,6 +189,22 @@ To change the hour, edit the `Hour` integer in the plist and run `bash schedulin
 
 The watch folder may need Full Disk Access for the runner if it lives in a synced or shared location. Grant it in System Settings, Privacy and Security, Full Disk Access.
 
+## Render worker
+
+The render worker turns the daily pipeline into a service for the Meta Video tile in the shelly admin. When a user uploads clips, picks settings, and clicks Create video now in the admin, a job is queued in Supabase. The worker picks up queued jobs, renders them with this same pipeline, and stores the finished video on R2 so the admin can stream and download it.
+
+Setup:
+
+```bash
+cd /Users/galbaumel/daily-video-agent
+cp .env.example .env          # then fill in the real Supabase and R2 values
+source .venv/bin/activate
+pip install boto3             # the worker needs boto3 to talk to R2
+python3 worker.py
+```
+
+The worker polls every few seconds for the oldest queued job, claims it, downloads its clips from R2, writes a temporary config from the job settings, runs `run.py` against that config, then uploads the result to `meta-video/out/<jobId>.mp4` and marks the job done. A failed job is marked error and the loop keeps running, so one bad job never stops the worker. It needs ffmpeg built with libass, the same system dependency the daily pipeline uses for burned in captions.
+
 ## Gotchas
 
 Normalize is mandatory before concat because phone clips differ in size, orientation, and fps. The words timeline is recomputed into one continuous timeline when clips are merged, so captions stay in sync across the join. Provide a music file at `assets/music.mp3` or set `audio.music.enabled` to false. The launchd minimal environment needs PATH set, which the plist handles. The AI and optional steps stay off the critical path, so a missing model, a missing music track, or an unconfigured Remotion never blocks a run. Every optional stage logs a warning and returns its input unchanged.

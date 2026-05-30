@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import re
 import subprocess
 import time
@@ -178,8 +179,18 @@ def load_config(config_path=None) -> dict:
     Merge order, later layer wins: presets.DEFAULTS, then the preset bundle
     named by the user (or by DEFAULTS), then the user config.yaml. Missing or
     invalid config.yaml degrades to an empty user layer so the run still works.
+
+    Config path resolution: an explicit config_path argument wins. Otherwise,
+    if the DVA_CONFIG environment variable is set it names the config file,
+    which lets the render worker point a run at a temporary per job config.
+    Otherwise the default ROOT/config.yaml is used.
     """
-    path = Path(config_path) if config_path else CONFIG_PATH
+    if config_path:
+        path = Path(config_path)
+    elif os.environ.get("DVA_CONFIG"):
+        path = Path(os.environ["DVA_CONFIG"])
+    else:
+        path = CONFIG_PATH
 
     user: dict = {}
     if path.exists():
