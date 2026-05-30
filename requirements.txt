@@ -1,0 +1,7 @@
+# Python dependencies for the daily video agent.
+# Note: ffmpeg is a system dependency installed via Homebrew (brew install ffmpeg),
+# it is not a pip package and is invoked through subprocess.
+
+auto-editor
+faster-whisper
+PyYAML

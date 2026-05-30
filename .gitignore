@@ -1,0 +1,15 @@
+# Working and generated artifacts
+work/
+logs/
+output/
+
+# Python
+**/__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+
+# Keep placeholder files so empty tracked dirs survive
+!**/.gitkeep
