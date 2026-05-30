@@ -1,0 +1,124 @@
+# Daily video agent. FULL reference of every setting you can change.
+#
+# You do not need this whole file to run. The real config is config.yaml, which
+# is intentionally short. Use this file as a menu: find a setting you want to
+# change, copy that one line (and its section) into config.yaml, and edit it.
+# Values shown here are the built in punchy defaults.
+#
+# Merge order, from weakest to strongest: built in defaults, then the preset
+# bundle (punchy, cinematic, balanced), then your config.yaml. The strongest
+# layer wins. So a value in config.yaml always overrides the preset.
+
+# Which overall look to start from before your own tweaks.
+# punchy: fast cuts, big bold center captions, strong zoom, bright punchy color.
+# cinematic: gentle crossfades, soft zoom, lower third captions, graded color.
+# balanced: a calm middle ground.
+preset: "punchy"            # punchy | cinematic | balanced
+
+# Folder the agent watches for new source clips to turn into a video.
+watch_folder: "./input"
+# Folder where the finished dated video file is written.
+output_folder: "./output"
+# After a source clip is used, move it out of the watch folder so it is not
+# processed again. true to archive, false to leave it in place.
+archive_processed: true
+
+# Final video shape. These almost never change for short form.
+target:
+  resolution: "1080x1920"   # width x height in pixels, portrait short form
+  fps: 30                   # frames per second of the final video
+
+# How dead air and pauses are cut out of each clip.
+cutting:
+  remove_silence: true      # true cuts silent gaps, false keeps everything
+  margin: "0.2sec"          # padding kept around kept speech, e.g. "0.2sec" or "200ms"
+  edit_mode: "audio"        # audio: cut by sound. none: do not cut at all
+  silence_threshold: "4%"   # how quiet counts as silence, higher cuts more
+  keep_pauses: false        # true leaves natural breathing room between sentences
+  min_clip_seconds: 0.0     # drop kept pieces shorter than this many seconds
+
+# Movement added to otherwise static shots, plus zoom punches on key words.
+motion:
+  enabled: true             # master switch for all motion effects
+  ken_burns: true           # slow continuous zoom or pan across the shot
+  ken_burns_amount: 0.08    # how strong the slow zoom is, 0 none to about 0.2 strong
+  ken_burns_direction: "in" # in: zoom in. out: zoom out. alternate: switch per clip
+  emphasis_zoom: true       # quick zoom punch on important spoken words
+  emphasis_strength: 0.18   # how hard the punch zooms, 0 none to about 0.3 strong
+  emphasis_hold: "0.6sec"   # how long each punch is held before easing back
+  emphasis_triggers:        # what counts as an important word worth a punch
+    numbers: true           # punch on spoken numbers like 3, 2025, 100
+    proper_nouns: true      # punch on names of people, places, brands
+    keywords:               # punch whenever one of these words is spoken
+      - "best"
+      - "never"
+      - "always"
+      - "free"
+      - "secret"
+      - "new"
+      - "most"
+      - "huge"
+      - "need"
+      - "must"
+      - "why"
+      - "how"
+    every_sentence_start: false   # true punches at the start of every sentence
+
+# How one clip changes into the next.
+transitions:
+  type: "hard"              # hard: instant cut. crossfade: dissolve. dip_to_black: fade through black. whip: fast blur swipe
+  duration: "0.25sec"       # how long a non hard transition lasts, ignored for hard
+
+# On screen captions burned into the video.
+captions:
+  enabled: true             # true shows captions, false hides them
+  language: "en"            # spoken language code used for transcription, e.g. en
+  style: "word_reveal"      # word_reveal: words appear as spoken. karaoke_pop: highlight current word. lower_third: subtitle band near the bottom
+  font: "Arial Black"       # font family name installed on the machine
+  font_size: 92             # caption text size in points
+  bold: true                # true makes the text bold
+  primary_color: "#FFFFFF"  # color of normal caption text, hex
+  highlight_color: "#FFD400"  # color of the currently spoken word, hex
+  outline: 6                # thickness of the dark outline around letters, 0 none
+  shadow: 2                 # drop shadow distance behind letters, 0 none
+  position: "center"        # center: middle of screen. lower_third: near bottom. top: near top
+  max_words: 3              # most words shown on screen at one time
+  uppercase: false          # true forces ALL CAPS captions
+  animation: "pop"          # pop: scale in. fade: fade in. slide: slide in. none: instant
+
+# Color grade applied to the whole video for mood and punch.
+color:
+  enabled: true             # true applies the grade, false leaves color untouched
+  look: "punch"             # punch: bright vivid. warm: golden. cool: blue. cinematic: filmic. none: no preset look
+  contrast: 1.06            # 1.0 unchanged, above 1 more contrast, below 1 flatter
+  saturation: 1.12          # 1.0 unchanged, above 1 more colorful, below 1 muted
+  brightness: 0.0           # 0.0 unchanged, positive brighter, negative darker
+  vignette: false           # true darkens the corners for a focused look
+
+# Sound: speech loudness and background music.
+audio:
+  loudness_normalize: true  # true evens out speech volume to a broadcast level
+  music:
+    enabled: true           # true mixes in a background music track
+    track: "./assets/music.mp3"   # path to the music file
+    volume: 0.22            # music level, 0 silent to 1 full, speech sits on top
+    loop: true              # true repeats the track to cover the whole video
+    duck_under_speech: true # true lowers music automatically while someone speaks
+    duck_amount: 0.6        # how much to lower music when ducking, 0 none to 1 full
+
+# Optional auto generated background or cutaway footage. Off by default.
+broll:
+  enabled: false            # true tries to add b roll, false skips it
+
+# Optional language model for creative editing decisions. Off by default.
+creative_llm:
+  enabled: false            # true lets an LLM suggest edits, false skips it
+
+# Optional title card shown before the main video.
+intro:
+  enabled: false            # true renders an intro card, false skips it
+  text: ""                  # the headline text shown on the intro card
+
+# How you are told a run finished.
+notify:
+  method: "macos_notification"   # macos_notification: desktop popup

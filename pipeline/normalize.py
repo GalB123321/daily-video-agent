@@ -41,13 +41,14 @@ def _has_audio(src: str, log: logging.Logger) -> bool:
         return False
 
 
-def normalize(src: str, index: int, resolution: str, fps: int, log: logging.Logger) -> str:
+def normalize(src: str, index: int, settings: dict, log: logging.Logger) -> str:
     """Normalize one clip to the target resolution and fps.
 
-    resolution is "WxH" (default 1080x1920 portrait). The video is scaled to
-    fit inside the canvas, padded to fill it, set to the target fps, and encoded
-    as H.264 with AAC stereo audio. When the source has no audio, a silent
-    stereo track is synthesized so every output clip is uniform.
+    Resolution and fps come from settings (target.resolution as "WxH", default
+    1080x1920 portrait, and target.fps, default 30). The video is scaled to fit
+    inside the canvas, padded to fill it, set to the target fps, and encoded as
+    H.264 with AAC stereo audio. When the source has no audio, a silent stereo
+    track is synthesized so every output clip is uniform.
 
     Returns the absolute path to work/normalized/clipNN.mp4.
     """
@@ -55,6 +56,9 @@ def normalize(src: str, index: int, resolution: str, fps: int, log: logging.Logg
     log.info("normalize: start clip%02d from %s", index, src)
 
     util.ensure_dirs()
+
+    resolution = str(util.get(settings, "target.resolution", "1080x1920"))
+    fps = int(util.get(settings, "target.fps", 30))
 
     width, height = resolution.lower().split("x")
     width = width.strip()

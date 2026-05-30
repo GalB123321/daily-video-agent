@@ -1,34 +1,25 @@
-# Daily video agent configuration. Portrait 1080x1920 at 30fps.
+# Daily video agent. Portrait 1080x1920 at 30fps.
+#
+# This is the short everyday config. To change the overall look, just change
+# the preset below to "cinematic" or "balanced". To fine tune one detail, copy
+# the matching key from config.full.yaml into this file. Anything you set here
+# wins over the preset, and the preset wins over the built in defaults.
+
+preset: "punchy"            # punchy | cinematic | balanced
+
 watch_folder: "/Users/galbaumel/Shared/photos"
 output_folder: "./output"
 archive_processed: true
 
-target:
-  resolution: "1080x1920"
-  fps: 30
-
-trim:
-  margin: "0.2sec"
-  edit_mode: "audio"
-
-subtitles:
-  enabled: true
-  language: "en"
-
-music:
-  enabled: true
-  track: "./assets/music.mp3"
-  volume: 0.25
-  duck_under_speech: false
-
-titles:
-  enabled: false
-
-broll:
-  enabled: false
-
-creative_llm:
-  enabled: false
-
-notify:
-  method: "macos_notification"
+# Example fine tuning overrides. Uncomment and edit any line to use it.
+#
+# captions:
+#   font_size: 100           # bigger on screen text
+#   highlight_color: "#FF3B30"   # change the spoken word color
+#
+# audio:
+#   music:
+#     volume: 0.15           # quieter background music
+#
+# color:
+#   look: "warm"             # punch | warm | cool | cinematic | none
