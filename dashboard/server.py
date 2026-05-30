@@ -138,6 +138,56 @@ def list_media(folder: Path) -> list:
     return items
 
 
+IDEAS_PROMPT = (
+    "You are a short form video director for Shelly, a restaurant in Caulfield, Melbourne "
+    "(Instagram @shellyrestaurant_). Produce a shoot plan a team member can film TODAY on a "
+    "phone, held in portrait, for one punchy 20 to 35 second social video. "
+    "Respond with ONLY valid JSON, no preamble and no code fence, in exactly this shape: "
+    '{"theme":"the angle of today\'s video in a few words",'
+    '"hook":"the opening line or on screen text that stops the scroll",'
+    '"shots":[{"action":"a concrete physical thing to film","why":"why it lands"}],'
+    '"caption":"the post caption with a few hashtags",'
+    '"audio":"a music or sound idea"}. '
+    "Give 6 to 8 shots. Make the actions concrete and fun to film, for example pour the coffee "
+    "in slow motion, steam rising off a fresh plate, a plate smash for the hook, hands plating a "
+    "dish, the espresso pull, a candid laugh. Keep it specific to a restaurant and cafe. "
+    "Do not use any dash characters in the text."
+)
+
+
+def _extract_json(text: str):
+    a = text.find("{")
+    b = text.rfind("}")
+    if a == -1 or b == -1 or b < a:
+        return None
+    try:
+        return json.loads(text[a:b + 1])
+    except Exception:
+        return None
+
+
+def gen_ideas(notes: str) -> dict:
+    prompt = IDEAS_PROMPT
+    if notes:
+        prompt += "\n\nNotes from the team about today: " + notes
+    try:
+        proc = subprocess.run(
+            ["claude", "-p", prompt],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=200,
+        )
+    except FileNotFoundError:
+        return {"ok": False, "error": "The Claude CLI was not found on PATH. Install Claude Code to enable shoot ideas."}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": "Timed out waiting for ideas. Try again."}
+    out = (proc.stdout or "").strip()
+    if proc.returncode != 0 or not out:
+        return {"ok": False, "error": ((proc.stderr or "No response from the model.").strip())[:400]}
+    data = _extract_json(out)
+    if data:
+        return {"ok": True, "ideas": data}
+    return {"ok": True, "raw": out}
+
+
 def start_run() -> dict:
     with _run_lock:
         if RUN["proc"] is not None and RUN["proc"].poll() is None:
@@ -334,6 +384,14 @@ class Handler(BaseHTTPRequestHandler):
 
         if p == "/api/run":
             self._send_json(start_run())
+            return
+
+        if p == "/api/ideas":
+            try:
+                payload = json.loads(self._read_body() or b"{}")
+            except Exception:
+                payload = {}
+            self._send_json(gen_ideas((payload.get("notes") or "").strip()))
             return
 
         self._send_json({"error": "not found"}, 404)

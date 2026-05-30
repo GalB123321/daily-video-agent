@@ -130,6 +130,35 @@
   .empty{color:var(--muted);font-size:12.5px;text-align:center;padding:14px}
   .hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.45}
   .save-flash{background:#3a9d5d;color:#fff}
+
+  /* live caption preview */
+  .livewrap{margin:14px 0 4px}
+  .livelabel{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+  .lphone{position:relative;width:230px;aspect-ratio:9/16;border-radius:16px;overflow:hidden;margin:0 auto;box-shadow:var(--lift);background:#000}
+  .lbg{position:absolute;inset:0;background:linear-gradient(135deg,#caa46a 0%,#7a4a2e 45%,#2b1c14 100%);background-size:cover}
+  .lvig{position:absolute;inset:0;pointer-events:none}
+  .lcap{position:absolute;left:7%;right:7%;text-align:center;line-height:1.08;z-index:2}
+  .lphone.center .lcap{top:50%;transform:translateY(-50%)}
+  .lphone.top .lcap{top:9%}
+  .lphone.bottom .lcap{bottom:10%}
+  .lcap .w{display:inline-block;margin:0 .1em}
+  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(var(--kbz,1.08))}}
+  @keyframes capPop{0%,8%{opacity:0;transform:scale(.72)}22%,82%{opacity:1;transform:scale(1)}96%,100%{opacity:0;transform:scale(1)}}
+  @keyframes capFade{0%,8%{opacity:0}22%,82%{opacity:1}96%,100%{opacity:0}}
+  @keyframes capSlide{0%,8%{opacity:0;transform:translateY(16px)}22%,82%{opacity:1;transform:translateY(0)}96%,100%{opacity:0}}
+  @keyframes kpopHi{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+
+  /* shoot list brain */
+  .brain h2{font-size:19px}
+  .brain textarea{width:100%;border:1px solid var(--border-strong);border-radius:9px;padding:9px 11px;resize:vertical;min-height:42px;font-family:inherit;margin-top:4px}
+  .idea-theme{font-family:"Cormorant Garamond",serif;font-size:20px;color:var(--gold-deep);margin:12px 0 2px}
+  .idea-hook{background:var(--gold-soft);border:1px solid var(--gold-light);border-radius:10px;padding:9px 12px;font-weight:600;margin:8px 0}
+  .shot{display:flex;gap:9px;padding:8px 0;border-top:1px solid var(--border)}
+  .shot .n{width:22px;height:22px;border-radius:6px;background:var(--ink);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+  .shot b{font-size:13px}.shot small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+  .meta-row{margin-top:10px;font-size:12.5px}.meta-row b{color:var(--ink-soft)}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--gold-soft);border-top-color:var(--gold-deep);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -182,6 +211,7 @@
         <h2><span class="ico" style="background:var(--gold-deep)">A</span> Captions</h2>
         <div class="sub">The on screen words. Pick a style, then tune the look.</div>
         <div class="caps" id="capstyles"></div>
+        <div class="livewrap"><div class="livelabel">Live preview · reflects every setting below</div><div id="livepreview"></div></div>
         <div id="sec-captions" style="margin-top:8px"></div>
       </div>
 
@@ -207,6 +237,14 @@
 
     <!-- RIGHT: run -->
     <div class="col-right">
+      <div class="card brain" style="margin:0">
+        <h2><span class="ico" style="background:var(--violet)">✸</span> Today's shoot list</h2>
+        <div class="sub">Ask the brain what to film today for a strong video. Hand the plan to whoever is shooting.</div>
+        <textarea id="ideaNotes" placeholder="Optional · anything special today? new dessert, busy Friday, a birthday…"></textarea>
+        <button id="ideaBtn" class="btn btn-gold" style="margin-top:9px;width:100%">Get today's ideas</button>
+        <div id="ideaOut" style="margin-top:6px"></div>
+      </div>
+
       <div class="card" style="margin:0">
         <h2><span class="ico" style="background:var(--ink)">▶</span> Today's clips</h2>
         <div class="sub" id="clipFolder">Loading folder…</div>
@@ -217,9 +255,9 @@
       <div class="card" style="margin:0">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
           <div class="status"><span class="dot" id="runDot"></span><span id="runStatus">Idle</span></div>
-          <button id="runBtn" class="btn btn-gold">Run now</button>
+          <button id="runBtn" class="btn btn-gold">✦ Create video now</button>
         </div>
-        <div class="console" id="console">Ready. Drop clips, then press Run now.</div>
+        <div class="console" id="console">Ready. Drop clips, then press Create video now.</div>
         <div class="hint" id="runHint"></div>
       </div>
 
@@ -242,6 +280,15 @@ const PRESET_INFO={
   balanced:{t:"Balanced",d:"A calm middle ground. Soft crossfades, medium zoom, warm color."},
 };
 const CAP_STYLES={word_reveal:"Word reveal",karaoke_pop:"Karaoke pop",lower_third:"Lower third"};
+const FONT_LIST=[
+  ["Arial Black","Arial Black · bold social"],["Impact","Impact · heavy"],
+  ["Helvetica Neue","Helvetica Neue"],["Avenir Next","Avenir Next"],
+  ["Futura","Futura"],["Gill Sans","Gill Sans"],["Trebuchet MS","Trebuchet MS"],
+  ["Verdana","Verdana"],["Georgia","Georgia · serif"],["Times New Roman","Times New Roman · serif"],
+  ["Oswald","Oswald"],["Bebas Neue","Bebas Neue"],["Anton","Anton"],
+  ["Montserrat","Montserrat"],["Poppins","Poppins"],
+];
+const SAMPLE=["we","make","the","best","coffee","in","caulfield"];
 
 let DEF={}, BUNDLES={}, state={preset:"punchy",watch_folder:"",output_folder:"",archive_processed:true,settings:{}};
 let dirty=false, logOffset=0, polling=false;
@@ -253,7 +300,7 @@ function sp(o,path,val){const ks=path.split(".");let a=o;for(let i=0;i<ks.length
 function setDirty(d){dirty=d;const p=$("#dirtyPill");p.textContent=d?"Unsaved changes":"All saved";p.classList.toggle("dirty",d);}
 
 function S(path){return gp(state.settings,path);}
-function setS(path,val){sp(state.settings,path,val);setDirty(true);if(path.startsWith("captions."))renderCaps();}
+function setS(path,val){sp(state.settings,path,val);setDirty(true);if(path.startsWith("captions."))renderCaps();if(/^(captions|motion|color)\./.test(path))renderLivePreview();}
 
 // ---- control builders ----
 function rowEl(label,hint,ctl){
@@ -335,6 +382,54 @@ function renderCaps(){
     host.appendChild(opt);
   });
 }
+function strokeShadow(n){
+  if(!n||n<=0)return "0 1px 2px rgba(0,0,0,.65)";
+  const r=Math.max(1,Math.round(n*0.45));const o=[];
+  for(let a=0;a<360;a+=45){const x=(Math.cos(a*Math.PI/180)*r).toFixed(1),y=(Math.sin(a*Math.PI/180)*r).toFixed(1);o.push(`${x}px ${y}px 0 #000`);}
+  o.push("0 2px 4px rgba(0,0,0,.5)");return o.join(",");
+}
+function colorFilter(col){
+  if(!col||col.enabled===false||col.look==="none")return "none";
+  const sat=col.saturation??1.12, con=col.contrast??1.06, bri=1+(col.brightness??0);
+  let extra="";
+  if(col.look==="warm")extra=" sepia(.28) hue-rotate(-8deg)";
+  else if(col.look==="cool")extra=" hue-rotate(-18deg)";
+  else if(col.look==="cinematic")extra=" sepia(.16) contrast(.97)";
+  return `saturate(${sat}) contrast(${con}) brightness(${bri.toFixed(2)})${extra}`;
+}
+function renderLivePreview(){
+  const host=$("#livepreview");if(!host)return;
+  const c=state.settings.captions||{}, m=state.settings.motion||{}, col=state.settings.color||{};
+  const on=c.enabled!==false;
+  const fs=Math.max(13,Math.round((c.font_size||92)*0.205));
+  const prim=c.primary_color||"#FFFFFF", hi=c.highlight_color||"#FFD400";
+  const weight=c.bold?800:500;
+  const upper=c.uppercase;
+  const stroke=strokeShadow(c.outline);
+  const pos=c.position==="top"?"top":(c.position==="lower_third"?"bottom":"center");
+  const fam=`'${c.font||"Arial Black"}',"DM Sans",sans-serif`;
+  const anim=c.animation&&c.animation!=="none"?({pop:"capPop",fade:"capFade",slide:"capSlide"}[c.animation]||"capPop"):null;
+  const animCss=anim?`${anim} 2.8s ease-in-out infinite`:"none";
+  const mw=Math.max(1,c.max_words||3);
+  let capInner="";
+  if(!on){capInner="";}
+  else if(c.style==="lower_third"){
+    capInner=`<span class="w" style="font-size:${Math.round(fs*0.74)}px">${SAMPLE.slice(0,6).map(w=>upper?w.toUpperCase():w).join(" ")}</span>`;
+  } else if(c.style==="karaoke_pop"){
+    const line=SAMPLE.slice(0,Math.max(3,mw+1));
+    capInner=line.map((w,i)=>{const act=i===line.length-1;return `<span class="w" style="color:${act?hi:prim};${act?'animation:kpopHi 1.6s infinite':''}">${upper?w.toUpperCase():w}</span>`;}).join(" ");
+  } else { // word_reveal
+    capInner=SAMPLE.slice(0,mw).map(w=>`<span class="w">${upper?w.toUpperCase():w}</span>`).join(" ");
+  }
+  const kb=(m.enabled!==false&&m.ken_burns)?(1+(m.ken_burns_amount||0.08)):1;
+  const kbCss=kb>1?`kenburns 6s ease-in-out infinite alternate`:"none";
+  const vig=col.vignette?"inset 0 0 70px 24px rgba(0,0,0,.55)":"none";
+  host.innerHTML=`<div class="lphone ${pos}">
+    <div class="lbg" style="filter:${colorFilter(col)};--kbz:${kb.toFixed(3)};animation:${kbCss}"></div>
+    <div class="lvig" style="box-shadow:${vig}"></div>
+    <div class="lcap" style="font-family:${fam};font-size:${fs}px;font-weight:${weight};color:${prim};text-shadow:${stroke};text-transform:${upper?'uppercase':'none'};animation:${animCss}">${capInner}</div>
+  </div>`;
+}
 function renderSections(){
   const cut=$("#sec-cutting");cut.innerHTML="";
   cut.append(
@@ -366,7 +461,7 @@ function renderSections(){
   const cap=$("#sec-captions");cap.innerHTML="";
   cap.append(
     toggle("captions.enabled","Show captions",""),
-    textC("captions.font","Font","Arial Black","A font installed on the machine"),
+    select("captions.font","Font",FONT_LIST,"Pick a font installed on the machine"),
     slider("captions.font_size","Size",40,160,1,"",v=>v),
     toggle("captions.bold","Bold",""),
     colorC("captions.primary_color","Text color",""),
@@ -405,7 +500,7 @@ function renderSections(){
     toggle("creative_llm.enabled","AI creative decisions","Needs Claude. Off by default"),
   );
 }
-function renderAll(){renderPresets();renderCaps();renderSections();}
+function renderAll(){renderPresets();renderCaps();renderSections();renderLivePreview();}
 
 // ---- save ----
 $("#saveBtn").onclick=async()=>{
@@ -475,6 +570,34 @@ async function loadOutputs(){
     host.appendChild(el);
   });
 }
+
+// ---- shoot list brain ----
+function esc(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+$("#ideaBtn").onclick=async()=>{
+  const btn=$("#ideaBtn"),out=$("#ideaOut");
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Thinking…';
+  out.innerHTML="";
+  try{
+    const r=await api("/api/ideas",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({notes:$("#ideaNotes").value})});
+    if(!r.ok){out.innerHTML=`<div class="hint" style="color:var(--danger)">${esc(r.error)}</div>`;}
+    else if(r.ideas){
+      const d=r.ideas;
+      let h="";
+      if(d.theme)h+=`<div class="idea-theme">${esc(d.theme)}</div>`;
+      if(d.hook)h+=`<div class="idea-hook">“${esc(d.hook)}”</div>`;
+      (d.shots||[]).forEach((s,i)=>{h+=`<div class="shot"><span class="n">${i+1}</span><div><b>${esc(s.action)}</b><small>${esc(s.why)}</small></div></div>`;});
+      if(d.audio)h+=`<div class="meta-row"><b>Audio ·</b> ${esc(d.audio)}</div>`;
+      if(d.caption)h+=`<div class="meta-row"><b>Caption ·</b> ${esc(d.caption)}</div>`;
+      h+=`<button class="btn btn-ghost" id="copyIdea" style="margin-top:12px;width:100%">Copy plan</button>`;
+      out.innerHTML=h;
+      $("#copyIdea").onclick=()=>{
+        const txt=[d.theme?("Theme: "+d.theme):"",d.hook?("Hook: "+d.hook):"",...(d.shots||[]).map((s,i)=>`${i+1}. ${s.action} (${s.why})`),d.audio?("Audio: "+d.audio):"",d.caption?("Caption: "+d.caption):""].filter(Boolean).join("\n");
+        navigator.clipboard.writeText(txt);$("#copyIdea").textContent="Copied ✓";setTimeout(()=>$("#copyIdea").textContent="Copy plan",1300);
+      };
+    } else {out.innerHTML=`<div class="hint" style="white-space:pre-wrap">${esc(r.raw||"No ideas returned.")}</div>`;}
+  }catch(e){out.innerHTML=`<div class="hint" style="color:var(--danger)">Could not reach the brain. ${esc(String(e))}</div>`;}
+  btn.disabled=false;btn.textContent="Get today's ideas";
+};
 
 // ---- boot ----
 async function boot(){
